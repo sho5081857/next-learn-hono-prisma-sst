@@ -1,0 +1,40 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = ""
+  extensions = [uuid_ossp(map: "uuid-ossp")]
+}
+
+model customers {
+  id        String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name      String @db.VarChar(255)
+  email     String @db.VarChar(255)
+  image_url String @db.VarChar(255)
+  invoices invoices[]
+}
+
+model invoices {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  customers customers @relation(fields: [customer_id], references: [id])
+  customer_id String   @db.Uuid
+  amount      Int
+  status      String   @db.VarChar(255)
+  date        DateTime @db.Date
+}
+
+model revenue {
+  month   String @unique @db.VarChar(4)
+  revenue Int
+}
+
+model users {
+  id       String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name     String @db.VarChar(255)
+  email    String @unique
+  password String
+}
