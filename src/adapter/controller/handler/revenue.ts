@@ -1,27 +1,22 @@
-import { Context } from "hono";
-import { apiVersion } from "../../../api/constants";
-import { newErrorResponse } from "../presenter/response";
-import { RevenueUseCase } from "../../../usecase/revenue";
-import { newGetAllRevenueListResponse } from "../presenter/revenue";
+import type { Context } from 'hono'
+import { apiVersion } from '../../../api/constants'
+import { newErrorResponse } from '../presenter/response'
+import type { RevenueUseCase } from '../../../usecase/revenue'
+import { newGetAllRevenueListResponse } from '../presenter/revenue/response/getAllRevenueList'
 
 export class RevenueHandler {
-  private revenueUseCase: RevenueUseCase;
+  private readonly revenueUseCase: RevenueUseCase
   constructor(revenueUseCase: RevenueUseCase) {
-    this.revenueUseCase = revenueUseCase;
+    this.revenueUseCase = revenueUseCase
   }
-  async getAllRevenueList(c: Context) {
+  async getAllRevenueList(c: Context): Promise<Response> {
     try {
-      const revenues = await this.revenueUseCase.getAll();
+      const revenueList = await this.revenueUseCase.getAll()
 
-      const revenueList = revenues.map((v) => ({
-        month: v.month,
-        revenue: v.revenue,
-      }));
-
-      return c.json(newGetAllRevenueListResponse(apiVersion, revenueList), 200);
+      return c.json(newGetAllRevenueListResponse(apiVersion, revenueList), 200)
     } catch (err: any) {
-      //   log.error(err.message);
-      return c.json(newErrorResponse(400, err.message));
+      // log.error(err.message);
+      return c.json(newErrorResponse(400, err.message))
     }
   }
 }
