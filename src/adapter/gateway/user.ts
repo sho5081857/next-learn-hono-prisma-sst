@@ -1,29 +1,19 @@
-import { PrismaClient } from '@prisma/client'
-import { CreateUserRequest } from '../controller/presenter/user/request/user-request'
-import { GetUser, User } from '../../entity/user'
+import type { PrismaClient } from '@prisma/client'
+import type { CreateUser, GetUser, User } from '../../entity/user'
 
 export interface UserRepository {
-  create(user: CreateUserRequest): Promise<GetUser>
+  create(user: CreateUser): Promise<GetUser>
   getById(id: string): Promise<GetUser | null>
   getByEmail(email: string): Promise<User | null>
 }
 
 export class UserRepositoryImpl implements UserRepository {
-  private prisma: PrismaClient
-
-  constructor(prisma: PrismaClient) {
-    this.prisma = prisma
+  private readonly prisma: PrismaClient
+  constructor(prime: PrismaClient) {
+    this.prisma = prime
   }
 
-  async create(user: CreateUserRequest): Promise<GetUser> {
-    const existingUser = await this.prisma.users.findUnique({
-      where: { email: user.email },
-    })
-
-    if (existingUser) {
-      throw new Error('Email already exists')
-    }
-
+  async create(user: CreateUser): Promise<GetUser> {
     const createdUser = await this.prisma.users.create({
       data: user,
     })
