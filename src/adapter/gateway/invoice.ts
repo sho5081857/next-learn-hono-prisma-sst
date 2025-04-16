@@ -1,31 +1,30 @@
-import { PrismaClient } from '@prisma/client'
-import { GetFilteredInvoice, GetInvoiceById, GetLatestInvoice, Invoice } from '../../entity/invoice'
-import {
-  CreateInvoiceRequest,
-  UpdateInvoiceRequest,
-} from '../controller/presenter/invoice/request/invoice-request'
+import type { PrismaClient } from '@prisma/client'
+import type {
+  CreateInvoice,
+  GetFilteredInvoice,
+  GetInvoice,
+  GetInvoiceById,
+  GetLatestInvoice,
+  UpdateInvoice,
+} from '../../entity/invoice'
 
 export interface InvoiceRepository {
   getLatest(): Promise<GetLatestInvoice[]>
-  getFiltered(
-    query: string,
-    offset: number,
-    limit: number
-  ): Promise<{ invoices: GetFilteredInvoice[]; totalCount: number }>
+  getFiltered(query: string, offset: number, limit: number): Promise<GetFilteredInvoice[]>
+  getFilteredAllCount(query: string): Promise<number>
   getPages(query: string): Promise<number>
   getAllCount(): Promise<number>
   getStatusCount(): Promise<{ paid: number; pending: number }>
   getById(id: string): Promise<GetInvoiceById | null>
-  create(invoice: CreateInvoiceRequest): Promise<Invoice>
-  update(id: string, invoice: UpdateInvoiceRequest): Promise<Invoice | null>
+  create(invoice: CreateInvoice): Promise<GetInvoice>
+  update(invoice: UpdateInvoice): Promise<GetInvoice | null>
   delete(id: string): Promise<void>
 }
 
 export class InvoiceRepositoryImpl implements InvoiceRepository {
-  private prisma: PrismaClient
-
-  constructor(prisma: PrismaClient) {
-    this.prisma = prisma
+  private readonly prisma: PrismaClient
+  constructor(prime: PrismaClient) {
+    this.prisma = prime
   }
 
   async getLatest(): Promise<GetLatestInvoice[]> {
@@ -54,32 +53,16 @@ export class InvoiceRepositoryImpl implements InvoiceRepository {
     }))
   }
 
-  async getFiltered(
-    query: string,
-    offset: number,
-    limit: number
-  ): Promise<{ invoices: GetFilteredInvoice[]; totalCount: number }> {
-    const totalCountResult = await this.prisma.$queryRaw<{ count: number }[]>`
-      SELECT COUNT(*)
-      FROM invoices
-      JOIN customers ON invoices.customer_id = customers.id
-      WHERE
-        customers.name ILIKE ${`%${query}%`} OR
-        customers.email ILIKE ${`%${query}%`} OR
-        invoices.amount::text ILIKE ${`%${query}%`} OR
-        invoices.date::text ILIKE ${`%${query}%`} OR
-        invoices.status ILIKE ${`%${query}%`}
-    `
-    const totalCount = Number(totalCountResult[0].count)
+  async getFiltered(query: string, offset: number, limit: number): Promise<GetFilteredInvoice[]> {
     const invoices = await this.prisma.$queryRaw<GetFilteredInvoice[]>`
       SELECT invoices.id,
-             invoices.customer_id,
-             invoices.amount,
-             invoices.date,
-             invoices.status,
-             customers.name,
-             customers.email,
-             customers.image_url
+            invoices.customer_id,
+            invoices.amount,
+            invoices.date,
+            invoices.status,
+            customers.name,
+            customers.email,
+            customers.image_url
       FROM invoices
       JOIN customers ON invoices.customer_id = customers.id
       WHERE
@@ -92,10 +75,24 @@ export class InvoiceRepositoryImpl implements InvoiceRepository {
       LIMIT ${limit} OFFSET ${offset}
     `
 
-    return {
-      invoices,
-      totalCount,
-    }
+    return invoices
+  }
+
+  async getFilteredAllCount(query: string): Promise<number> {
+    const totalCountResult = await this.prisma.$queryRaw<{ count: number }[]>`
+      SELECT COUNT(*)
+      FROM invoices
+      JOIN customers ON invoices.customer_id = customers.id
+      WHERE
+        customers.name ILIKE ${`%${query}%`} OR
+        customers.email ILIKE ${`%${query}%`} OR
+        invoices.amount::text ILIKE ${`%${query}%`} OR
+        invoices.date::text ILIKE ${`%${query}%`} OR
+        invoices.status ILIKE ${`%${query}%`}
+    `
+    const totalCount = Number(totalCountResult[0].count)
+
+    return totalCount
   }
 
   async getPages(query: string): Promise<number> {
@@ -115,7 +112,7 @@ export class InvoiceRepositoryImpl implements InvoiceRepository {
   }
 
   async getAllCount(): Promise<number> {
-    return this.prisma.invoices.count()
+    return await this.prisma.invoices.count()
   }
 
   async getStatusCount(): Promise<{ paid: number; pending: number }> {
@@ -143,7 +140,9 @@ export class InvoiceRepositoryImpl implements InvoiceRepository {
       },
     })
 
-    if (!invoice) return null
+    if (!invoice) {
+      return null
+    }
 
     return {
       id: invoice.id,
@@ -153,7 +152,7 @@ export class InvoiceRepositoryImpl implements InvoiceRepository {
     }
   }
 
-  async create(invoice: CreateInvoiceRequest): Promise<Invoice> {
+  async create(invoice: CreateInvoice): Promise<GetInvoice> {
     const createdInvoice = await this.prisma.invoices.create({
       data: {
         customer_id: invoice.customer_id,
@@ -172,9 +171,9 @@ export class InvoiceRepositoryImpl implements InvoiceRepository {
     }
   }
 
-  async update(id: string, invoice: UpdateInvoiceRequest): Promise<Invoice | null> {
+  async update(invoice: UpdateInvoice): Promise<GetInvoice | null> {
     const updatedInvoice = await this.prisma.invoices.update({
-      where: { id },
+      where: { id: invoice.id },
       data: invoice,
     })
 
