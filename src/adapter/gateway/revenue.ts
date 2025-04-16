@@ -1,23 +1,18 @@
-import { PrismaClient } from "@prisma/client";
-import { Revenue } from "../../entity/revenue";
+import type { PrismaClient } from '@prisma/client'
+import type { GetAllRevenue } from '../../entity/revenue'
 
 export interface RevenueRepository {
-  getAll(): Promise<Revenue[]>;
+  getAll(): Promise<GetAllRevenue[]>
 }
 
 export class RevenueRepositoryImpl implements RevenueRepository {
-  private prisma: PrismaClient;
-
-  constructor(prisma: PrismaClient) {
-    this.prisma = prisma;
+  private readonly prisma: PrismaClient
+  constructor(prime: PrismaClient) {
+    this.prisma = prime
   }
 
-  async getAll(): Promise<Revenue[]> {
-    try {
-      const revenues = await this.prisma.revenue.findMany();
-      return revenues;
-    } catch (error: any) {
-      throw new Error(`Failed to fetch revenues: ${error.message}`);
-    }
+  async getAll(): Promise<GetAllRevenue[]> {
+    const revenues = await this.prisma.revenue.findMany()
+    return revenues
   }
 }

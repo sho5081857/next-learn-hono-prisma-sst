@@ -1,18 +1,28 @@
-import { Revenue } from "../entity/revenue";
-import { RevenueRepository } from "../adapter/gateway/revenue";
+import type { RevenueRepository } from '../adapter/gateway/revenue'
+
+export interface GetAllRevenueDto {
+  month: string
+  revenue: number
+}
 
 export interface RevenueUseCase {
-  getAll(): Promise<Revenue[]>;
+  getAll(): Promise<GetAllRevenueDto[]>
 }
 
 export class RevenueUseCaseImpl implements RevenueUseCase {
-  private revenueRepository: RevenueRepository;
-
+  private readonly revenueRepository: RevenueRepository
   constructor(revenueRepository: RevenueRepository) {
-    this.revenueRepository = revenueRepository;
+    this.revenueRepository = revenueRepository
   }
 
-  async getAll(): Promise<Revenue[]> {
-    return this.revenueRepository.getAll();
+  async getAll(): Promise<GetAllRevenueDto[]> {
+    const revenues = await this.revenueRepository.getAll()
+    const revenueList: GetAllRevenueDto[] = revenues.map((item) => {
+      return {
+        month: item.month,
+        revenue: item.revenue,
+      }
+    })
+    return revenueList
   }
 }
