@@ -1,7 +1,7 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  binaryTargets   = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -11,20 +11,20 @@ datasource db {
 }
 
 model customers {
-  id        String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  name      String @db.VarChar(255)
-  email     String @db.VarChar(255)
-  image_url String @db.VarChar(255)
-  invoices invoices[]
+  id        String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name      String     @db.VarChar(255)
+  email     String     @db.VarChar(255)
+  image_url String     @db.VarChar(255)
+  invoices  invoices[]
 }
 
 model invoices {
-  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  customers customers @relation(fields: [customer_id], references: [id])
-  customer_id String   @db.Uuid
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  customers   customers @relation(fields: [customer_id], references: [id])
+  customer_id String    @db.Uuid
   amount      Int
-  status      String   @db.VarChar(255)
-  date        DateTime @db.Date
+  status      String    @db.VarChar(255)
+  date        DateTime  @db.Date
 }
 
 model revenue {
