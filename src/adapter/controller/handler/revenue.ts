@@ -4,7 +4,6 @@ import { newErrorResponse } from '../presenter/response'
 import type { RevenueUseCase } from '../../../usecase/revenue'
 import { newGetAllRevenueListResponse } from '../presenter/revenue/response/getAllRevenueList'
 
-
 export class RevenueHandler {
   private readonly revenueUseCase: RevenueUseCase
   constructor(revenueUseCase: RevenueUseCase) {
