@@ -35,15 +35,3 @@ export function newCreateUserRequest(data: CreateUserRequest): CreateUserRequest
     password: data.password,
   }
 }
-
-export interface LoginRequest {
-  email: string
-  password: string
-}
-
-export function newLoginRequest(data: LoginRequest): LoginRequest {
-  return {
-    email: data.email,
-    password: data.password,
-  }
-}
