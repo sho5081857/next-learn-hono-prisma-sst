@@ -14,22 +14,16 @@ import { InvoiceRepositoryImpl } from '../gateway/invoice'
 import { InvoiceUseCaseImpl } from '../../usecase/invoice'
 import { InvoiceHandler } from '../controller/handler/invoice'
 import { zValidator } from '@hono/zod-validator'
-
-import {
-  createInvoiceRequest,
-  newCreateInvoiceRequest,
-  newUpdateInvoiceRequest,
-  updateInvoiceRequest,
-} from '../controller/presenter/invoice/request/invoice-request'
 import { UserRepositoryImpl } from '../gateway/user'
 import { UserUseCaseImpl } from '../../usecase/user'
 import { UserHandler } from '../controller/handler/user'
-import {
-  createUserRequest,
-  loginRequest,
-  newCreateUserRequest,
-  newLoginRequest,
-} from '../controller/presenter/user/request/user-request'
+import { newCreateInvoiceRequest } from '../controller/presenter/invoice/request/createInvoice'
+import { newUpdateInvoiceRequest } from '../controller/presenter/invoice/request/updateInvoice'
+import { newCreateUserRequest } from '../controller/presenter/user/request/createUser'
+import { newLoginRequest } from '../controller/presenter/user/request/login'
+import { createInvoiceRequestValid, updateInvoiceRequestValid } from '../controller/presenter/invoice/request/validation'
+import { createUserRequestValid, loginRequestValid } from '../controller/presenter/user/request/validation'
+import { apiVersion } from '../../api/constants'
 
 const JWT_SECRET = process.env.SECRET ?? 'secret'
 
@@ -83,12 +77,12 @@ const invoice = new Hono()
   .get('/status/count', (c) => {
     return invoiceHandler.getAllInvoicesStatusCount(c)
   })
-  .post('', zValidator('json', createInvoiceRequest), (c) => {
+  .post('', zValidator('json', createInvoiceRequestValid), (c) => {
     const validated = c.req.valid('json')
     const createInvoice = newCreateInvoiceRequest(validated)
     return invoiceHandler.createInvoice(c, createInvoice)
   })
-  .patch('/:id', zValidator('json', updateInvoiceRequest), (c) => {
+  .patch('/:id', zValidator('json', updateInvoiceRequestValid), (c) => {
     const validated = c.req.valid('json')
     const updateInvoice = newUpdateInvoiceRequest(validated)
     return invoiceHandler.updateInvoiceById(c, updateInvoice)
@@ -101,14 +95,13 @@ const revenue = new Hono().get('', (c) => {
   return revenueHandler.getAllRevenueList(c)
 })
 
-
 const base = new Hono()
-  .post('/register', zValidator('json', createUserRequest), (c) => {
+  .post('/register', zValidator('json', createUserRequestValid), (c) => {
     const validated = c.req.valid('json')
     const createUser = newCreateUserRequest(validated)
     return userHandler.createUser(c, createUser)
   })
-  .post('/login', zValidator('json', loginRequest), (c) => {
+  .post('/login', zValidator('json', loginRequestValid), (c) => {
     const validated = c.req.valid('json')
     const loginUser = newLoginRequest(validated)
     return userHandler.loginUser(c, loginUser)
@@ -128,7 +121,7 @@ const router = new Hono()
   .use('*', timeout(2000))
   .get('/', (c) => c.html('<h1>Index Page</h1>'))
   .get('/health', (c) => c.json({ status: 'healthy' }))
-  // .basePath('/api/v1')
+  .basePath(`/api/${apiVersion}`)
   .use(
     '/users/*',
     jwt({
@@ -159,5 +152,5 @@ const router = new Hono()
   .route('/revenues', revenue)
   .route('/invoices', invoice)
 
-export default router
+export { router }
 export type AppType = typeof router
