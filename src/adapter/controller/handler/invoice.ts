@@ -1,25 +1,24 @@
-import { Context } from 'hono'
-import { InvoiceUseCase } from '../../../usecase/invoice'
-import { newErrorResponse } from '../presenter/response'
-import {
-  newGetAllCountResponse,
-  newGetAllInvoicesStatusCountResponse,
-  newGetFilteredInvoiceListResponse,
-  newGetInvoiceByIdResponse,
-  newGetLatestInvoiceListResponse,
-  newGetPagesResponse,
-  newInvoiceResponse,
-} from '../presenter/invoice/response/invoice'
+import type { Context } from 'hono'
 import { apiVersion } from '../../../api/constants'
-import {
-  CreateInvoiceRequest,
-  UpdateInvoiceRequest,
-} from '../presenter/invoice/request/invoice-request'
+import type {
+  CreateInvoiceInputDto,
+  InvoiceUseCase,
+  UpdateInvoiceInputDto,
+} from '../../../usecase/invoice'
+import type { CreateInvoiceRequest } from '../presenter/invoice/request/createInvoice'
+import type { UpdateInvoiceRequest } from '../presenter/invoice/request/updateInvoice'
+import { newGetAllCountResponse } from '../presenter/invoice/response/getAllCount'
+import { newGetAllInvoicesStatusCountResponse } from '../presenter/invoice/response/getAllInvoicesStatusCount'
+import { newGetFilteredInvoiceListResponse } from '../presenter/invoice/response/getFilteredInvoiceList'
+import { newGetInvoiceByIdResponse } from '../presenter/invoice/response/getInvoiceById'
+import { newGetLatestInvoiceListResponse } from '../presenter/invoice/response/getLatestInvoiceList'
+import { newGetPagesResponse } from '../presenter/invoice/response/getPages'
+import { newErrorResponse } from '../presenter/response'
+import { newInvoiceResponse } from '../presenter/invoice/response/Invoice'
 // import { log } from '../../../logger';
 
 export class InvoiceHandler {
-  private invoiceUseCase: InvoiceUseCase
-
+  private readonly invoiceUseCase: InvoiceUseCase
   constructor(invoiceUseCase: InvoiceUseCase) {
     this.invoiceUseCase = invoiceUseCase
   }
@@ -49,8 +48,8 @@ export class InvoiceHandler {
     try {
       const { invoices, totalCount } = await this.invoiceUseCase.getFiltered(
         query,
-        parseInt(offset),
-        parseInt(limit)
+        Number.parseInt(offset),
+        Number.parseInt(limit)
       )
 
       const invoiceList = invoices.map((v) => ({
@@ -117,8 +116,13 @@ export class InvoiceHandler {
     }
   }
 
-  async createInvoice(c: Context, invoice: CreateInvoiceRequest) {
+  async createInvoice(c: Context, req: CreateInvoiceRequest) {
     try {
+      const invoice: CreateInvoiceInputDto = {
+        customer_id: req.customer_id,
+        amount: req.amount,
+        status: req.status,
+      }
       const createdInvoice = await this.invoiceUseCase.create(invoice)
       return c.json(newInvoiceResponse(apiVersion, createdInvoice), 201)
     } catch (err: any) {
@@ -127,23 +131,21 @@ export class InvoiceHandler {
     }
   }
 
-  async updateInvoiceById(c: Context, invoice: UpdateInvoiceRequest) {
+  async updateInvoiceById(c: Context, req: UpdateInvoiceRequest) {
     try {
       const id = c.req.param('id')
-      const updatedInvoice = await this.invoiceUseCase.update(id, invoice)
+      const invoice: UpdateInvoiceInputDto = {
+        id: id,
+        customer_id: req.customer_id,
+        amount: req.amount,
+        status: req.status,
+      }
+      const updatedInvoice = await this.invoiceUseCase.update(invoice)
       if (!updatedInvoice) {
         return c.json(newErrorResponse(404, 'Invoice not found'))
       }
 
-      return c.json({
-        apiVersion: apiVersion,
-        data: {
-          id: updatedInvoice.id,
-          customerId: updatedInvoice.customer_id,
-          status: updatedInvoice.status,
-          amount: updatedInvoice.amount,
-        },
-      })
+      return c.json(newInvoiceResponse(apiVersion, updatedInvoice))
     } catch (err: any) {
       //   log.error(err.message);
       return c.json(newErrorResponse(400, err.message))
