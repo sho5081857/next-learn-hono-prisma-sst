@@ -10,7 +10,6 @@ const __dirname = dirname(__filename)
 const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
 const databaseUrl = `postgresql://${Resource.MyPostgres.username}:${Resource.MyPostgres.password}@${Resource.MyPostgres.host}:${Resource.MyPostgres.port}/${Resource.MyPostgres.database}`
-const databaseUrl = 'postgresql://postgres:postgres@localhost:5432/postgres'
 
 export const prisma =
   globalForPrisma.prisma ||
