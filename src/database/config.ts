@@ -2,9 +2,8 @@ import { PrismaClient } from '@prisma/client'
 import { Resource } from 'sst'
 import { readFileSync } from 'fs'
 import { dirname, join } from 'path'
-import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url)
+const __filename = join(process.cwd(), 'src', 'database', 'config.ts')
 const __dirname = dirname(__filename)
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient }
